@@ -425,7 +425,7 @@ fetch_project() {
   echo "  cd $DEST && npm ci        # same versions as the server (npm install also works)"
   [ "$P" = frontend ] && echo "  npm run dev               # or open $DEST/static/example.html (no npm needed)"
   [ "$P" = backend ] && echo "  npm run start"
-  echo "Guide: docs/frontend-backend.md"
+  echo "More help: bash iot.sh -> 1225 -> 2 -> 3"
 }
 
 cmd_frontend() { fetch_project frontend "$@"; }
@@ -1261,11 +1261,13 @@ insider_source() {
   echo "Source code ($INSIDER_REPO_URL)"
   echo "  1) Main server : publish the repo so dev machines can download it (needs sudo + internet)"
   echo "  2) Dev machine : download the source code from the main server (frontend / backend / both)"
-  echo "  3) Exit"
+  echo "  3) Guide       : how to get the frontend / backend files (text)"
+  echo "  4) Exit"
   read -r -p "Choose [2]: " pick
   case "${pick:-2}" in
     1) insider_publish ;;
     2) insider_download ;;
+    3) insider_files_guide ;;
     *) echo "Cancelled" ;;
   esac
 }
@@ -1370,6 +1372,71 @@ insider_download() {
     esac
   done
   echo "Update later:  cd $DEST && git pull"
+}
+
+# text only: how a dev machine gets the frontend / backend files
+insider_files_guide() {
+  cat <<'EOF_FILES'
+
+#####################################################################
+#  Getting the frontend / backend files
+#####################################################################
+
+Two kinds of files are prepared on the main server (the one with internet).
+
+  A) Source code   - the project itself (this menu: Source code -> 1 / 2)
+  B) Dependencies  - packages for npm (bundle: package.json, lock file,
+                     npm registry mirror, ready-made frontend libraries)
+
+---------------------------------------------------------------------
+On the main server (once, and again after changes)
+---------------------------------------------------------------------
+  sudo bash iot.sh bundle            # dependencies (B): needs internet
+  sudo bash iot.sh                   # then 1225 -> 2 -> 1 : publishes the source code (A)
+
+Run the second command again whenever GitHub has new commits.
+Ports used: 8000 (files and repo), 4873 (npm registry).
+
+---------------------------------------------------------------------
+On the dev machine (no root needed)
+---------------------------------------------------------------------
+Source code (A), choose frontend, backend or both:
+  curl -fO http://SERVER_IP:8000/iot.sh
+  bash iot.sh                        # then 1225 -> 2 -> 2
+  or by hand: git clone http://SERVER_IP:8000/insider.git
+
+Update later:  cd insider_file && git pull
+
+Dependencies (B), when you want only the package files:
+  bash iot.sh frontend --from http://SERVER_IP:8000 ./web
+  bash iot.sh backend  --from http://SERVER_IP:8000 ./api
+
+Both commands verify checksums and write a .npmrc in that folder so npm
+uses http://SERVER_IP:4873/. Your own package.json is never overwritten
+(the server's copy is saved as package.json.new).
+
+Then:
+  cd frontend && npm ci && npm run dev
+  cd backend  && npm ci && npm run seed && npm run dev
+
+The frontend also has ready-made libraries (Vue, Vuetify, axios ...) in
+static/ ; open static/example.html in a browser, no npm needed.
+
+---------------------------------------------------------------------
+Problems
+---------------------------------------------------------------------
+- Clone fails / "Cannot fetch": check the URL and port 8000, and that the
+  server ran "1225 -> 2 -> 1" (source) or "bundle" (dependencies).
+  On the server: systemctl status iot-bundle
+- npm cannot connect: check http://SERVER_IP:4873/-/ping and
+  "docker ps" shows npm-registry on the server.
+- "This bundle has no frontend files": the bundle is old, run bundle again.
+- "Checksum ... does not match": run bundle again on the server, then retry.
+- npm ci says the lock file is out of sync: use npm install instead.
+- Only the frontend or backend is needed: choose it in step 2 (the other
+  folder is not downloaded).
+
+EOF_FILES
 }
 
 # ---------------------------------------------------------------------
@@ -2154,7 +2221,7 @@ cmd_setup() {
 # =====================================================================
 #  main
 # =====================================================================
-trap 'rm -f "${SUMS:-}" "${SUMS:-}".*' EXIT
+trap '[ -n "${SUMS:-}" ] && rm -f "$SUMS" "$SUMS".*; true' EXIT   # only when SUMS is set: an empty SUMS made the ".*" glob delete dotfiles in the current directory
 
 # global options (any position): --yes/-y answers confirmations (never wipes data), --version prints the version
 ARGS=()

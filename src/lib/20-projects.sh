@@ -302,7 +302,7 @@ fetch_project() {
   echo "  cd $DEST && npm ci        # same versions as the server (npm install also works)"
   [ "$P" = frontend ] && echo "  npm run dev               # or open $DEST/static/example.html (no npm needed)"
   [ "$P" = backend ] && echo "  npm run start"
-  echo "Guide: docs/frontend-backend.md"
+  echo "More help: bash iot.sh -> 1225 -> 2 -> 3"
 }
 
 cmd_frontend() { fetch_project frontend "$@"; }

@@ -1,7 +1,7 @@
 # =====================================================================
 #  main
 # =====================================================================
-trap 'rm -f "${SUMS:-}" "${SUMS:-}".*' EXIT
+trap '[ -n "${SUMS:-}" ] && rm -f "$SUMS" "$SUMS".*; true' EXIT   # only when SUMS is set: an empty SUMS made the ".*" glob delete dotfiles in the current directory
 
 # global options (any position): --yes/-y answers confirmations (never wipes data), --version prints the version
 ARGS=()
