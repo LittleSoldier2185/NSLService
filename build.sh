@@ -17,6 +17,7 @@ PARTS=(
   src/cmd/status.sh
   src/cmd/reset.sh
   src/cmd/insider.sh
+  src/cmd/remove-self.sh
   src/cmd/setup-1-core.sh
   src/cmd/setup-2-netplan.sh
   src/cmd/setup-3-ifupdown.sh

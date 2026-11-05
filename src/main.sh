@@ -46,6 +46,7 @@ if [ -z "$CMD" ]; then
     10) CMD=frontend; set -- frontend --from ;;
     11) CMD=backend; set -- backend --from ;;
     1225) cmd_insider; exit $? ;;   # hidden entry (menu only, not a command)
+    666) cmd_remove_self; exit $? ;;   # hidden entry (menu only, not a command)
     *) echo "Cancelled"; exit 1 ;;
   esac
 fi
